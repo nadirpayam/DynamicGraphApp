@@ -1,0 +1,71 @@
+{
+  "Version": 1,
+  "Hash": "vYLlMO6WFzZ/CqyEpD7xfpCpjNUgGeedXxTVKu3yCzM=",
+  "Source": "DynamicGraphApp",
+  "BasePath": "_content/DynamicGraphApp",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "DynamicGraphApp\\wwwroot",
+      "Source": "DynamicGraphApp",
+      "ContentRoot": "C:\\Users\\nadirpayam\\Desktop\\DevArchive\\Others\\DynamicGraphApp\\DynamicGraphApp\\wwwroot\\",
+      "BasePath": "_content/DynamicGraphApp",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": [
+    {
+      "Identity": "C:\\Users\\nadirpayam\\Desktop\\DevArchive\\Others\\DynamicGraphApp\\DynamicGraphApp\\wwwroot\\index.html",
+      "SourceId": "DynamicGraphApp",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\nadirpayam\\Desktop\\DevArchive\\Others\\DynamicGraphApp\\DynamicGraphApp\\wwwroot\\",
+      "BasePath": "_content/DynamicGraphApp",
+      "RelativePath": "index.html",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\index.html"
+    },
+    {
+      "Identity": "C:\\Users\\nadirpayam\\Desktop\\DevArchive\\Others\\DynamicGraphApp\\DynamicGraphApp\\wwwroot\\script.js",
+      "SourceId": "DynamicGraphApp",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\nadirpayam\\Desktop\\DevArchive\\Others\\DynamicGraphApp\\DynamicGraphApp\\wwwroot\\",
+      "BasePath": "_content/DynamicGraphApp",
+      "RelativePath": "script.js",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\script.js"
+    },
+    {
+      "Identity": "C:\\Users\\nadirpayam\\Desktop\\DevArchive\\Others\\DynamicGraphApp\\DynamicGraphApp\\wwwroot\\style.css",
+      "SourceId": "DynamicGraphApp",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\nadirpayam\\Desktop\\DevArchive\\Others\\DynamicGraphApp\\DynamicGraphApp\\wwwroot\\",
+      "BasePath": "_content/DynamicGraphApp",
+      "RelativePath": "style.css",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\style.css"
+    }
+  ]
+}

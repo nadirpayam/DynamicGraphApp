@@ -1,0 +1,33 @@
+{
+  "Files": [
+    {
+      "Id": "C:\\Users\\nadirpayam\\Desktop\\DevArchive\\Others\\DynamicGraphApp\\DynamicGraphApp\\wwwroot\\index.html",
+      "PackagePath": "staticwebassets\\index.html"
+    },
+    {
+      "Id": "C:\\Users\\nadirpayam\\Desktop\\DevArchive\\Others\\DynamicGraphApp\\DynamicGraphApp\\wwwroot\\script.js",
+      "PackagePath": "staticwebassets\\script.js"
+    },
+    {
+      "Id": "C:\\Users\\nadirpayam\\Desktop\\DevArchive\\Others\\DynamicGraphApp\\DynamicGraphApp\\wwwroot\\style.css",
+      "PackagePath": "staticwebassets\\style.css"
+    },
+    {
+      "Id": "obj\\Debug\\net6.0\\staticwebassets\\msbuild.DynamicGraphApp.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net6.0\\staticwebassets\\msbuild.build.DynamicGraphApp.props",
+      "PackagePath": "build\\DynamicGraphApp.props"
+    },
+    {
+      "Id": "obj\\Debug\\net6.0\\staticwebassets\\msbuild.buildMultiTargeting.DynamicGraphApp.props",
+      "PackagePath": "buildMultiTargeting\\DynamicGraphApp.props"
+    },
+    {
+      "Id": "obj\\Debug\\net6.0\\staticwebassets\\msbuild.buildTransitive.DynamicGraphApp.props",
+      "PackagePath": "buildTransitive\\DynamicGraphApp.props"
+    }
+  ],
+  "ElementsToRemove": []
+}
