@@ -21,17 +21,53 @@ $(document).ready(() => {
                 database: db
             }),
             success: (data) => {
-
                 if (data.success) {
                     $("#columnsSection").show();
-                    connectionMessage.text("Baglanildi.").show();
+                    connectionMessage.text("Bağlanıldı.").show();
                     setTimeout(() => {
                         connectionMessage.fadeOut();
                     }, 3000);
+
+                    // Veritabanı bağlantısı başarılıysa prosedürleri getirme işlemini başlat
+                    $.ajax({
+                        url: "https://localhost:7205/api/Data/getProcedures",
+                        method: "GET",
+                        success: (procedures) => {
+                            // Dönen prosedür isimlerini combobox'ta listele
+                            const comboBox = $("#proceduresComboBox");
+                            comboBox.empty(); // Önce mevcut öğeleri temizle
+                            procedures.forEach((procedure) => {
+                                comboBox.append(new Option(procedure, procedure));
+                            });
+                            $("#proceduresComboBox").show();
+                            $("#executeProcedureButton").show();
+                        },
+                        error: (error) => {
+                            console.error("Prosedürler alınırken bir hata oluştu:", error);
+                        }
+                    });
+                    $.ajax({
+                        url: "https://localhost:7205/api/Data/getViews",
+                        method: "GET",
+                        success: (procedures) => {
+                            // Dönen prosedür isimlerini combobox'ta listele
+                            const comboBox = $("#viewsComboBox");
+                            comboBox.empty(); // Önce mevcut öğeleri temizle
+                            procedures.forEach((procedure) => {
+                                comboBox.append(new Option(procedure, procedure));
+                            });
+                            $("#viewsComboBox").show();
+                            $("#executeViewButton").show();
+                        },
+                        error: (error) => {
+                            console.error("View alınırken bir hata oluştu:", error);
+                        }
+                    });
                 } else {
-                    connectionMessage.text("Bilgilerinizde bir hata var duzeltin lutfen.").show();
+                    connectionMessage.text("Bilgilerinizde bir hata var, lütfen düzeltin.").show();
                 }
             },
+
             error: (error) => {
                 connectionMessage.text("Hata: " + error.message).css("color", "red").show();
             }
@@ -77,6 +113,80 @@ $(document).ready(() => {
             }
         });
     });
+
+    $("#executeProcedureButton").on("click", () => {
+        const selectedProcedure = $("#proceduresComboBox").val();
+        if (!selectedProcedure) {
+            alert("Lütfen bir prosedür seçin.");
+            return;
+        }
+
+        $.ajax({
+            url: "https://localhost:7205/api/Data/executeProcedure",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(selectedProcedure),
+            success: (data) => {
+                if (data.length > 0) {
+                    valuesArray = data.map(item => ({
+                        x: item.xValue,
+                        y: item.yValue
+                    }));
+                    $("#graph").show();
+                    $("#dataMessage").show();
+                    
+                    $("#dataMessage").text("Veriler başarıyla toplandı. Şimdi grafik oluşturabilirsiniz.").show();
+                    setTimeout(() => {
+                        $("#dataMessage").fadeOut();
+                    }, 3000);
+                } else {
+                    $("#dataMessage").text("Veri bulunamadı.").css("color", "red").show();
+                }
+            },
+            error: (error) => {
+                console.error("Hata:", error);
+                alert("Stored procedure çalıştırılırken bir hata oluştu.");
+            }
+        });
+    });
+
+    $("#executeViewButton").on("click", () => {
+        const selectedView = $("#viewsComboBox").val();
+        if (!selectedView) {
+            alert("Lütfen bir prosedür seçin.");
+            return;
+        }
+
+        $.ajax({
+            url: "https://localhost:7205/api/Data/executeViews",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(selectedView),
+            success: (data) => {
+                if (data.length > 0) {
+                    valuesArray = data.map(item => ({
+                        x: item.xValue,
+                        y: item.yValue
+                    }));
+                    $("#graph").show();
+                    $("#dataMessage").show();
+
+                    $("#dataMessage").text("Veriler başarıyla toplandı. Şimdi grafik oluşturabilirsiniz.").show();
+                    setTimeout(() => {
+                        $("#dataMessage").fadeOut();
+                    }, 3000);
+                } else {
+                    $("#dataMessage").text("Veri bulunamadı.").css("color", "red").show();
+                }
+            },
+            error: (error) => {
+                console.error("Hata:", error);
+                alert("Stored procedure çalıştırılırken bir hata oluştu.");
+            }
+        });
+    });
+
+
 
     const getValues = () => ({
         xValues: valuesArray.map(item => item.x),

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using DynamicGraphApp.Interfaces;
 using DynamicGraphApp.Models;
+using System.Data.SqlClient;
 
 namespace DynamicGraphApp.Controllers
 {
@@ -57,6 +58,179 @@ namespace DynamicGraphApp.Controllers
 
             return Ok(data);
         }
+
+        [HttpGet("getProcedures")]
+        public IActionResult GetProcedures()
+        {
+            string server = HttpContext.Session.GetString("Server");
+            string user = HttpContext.Session.GetString("User");
+            string pass = HttpContext.Session.GetString("Pass");
+            string database = HttpContext.Session.GetString("Database");
+
+            if (string.IsNullOrEmpty(server) || string.IsNullOrEmpty(user) || string.IsNullOrEmpty(pass) || string.IsNullOrEmpty(database))
+            {
+                return BadRequest("Connection bilgileri bulunamadı. Lütfen bağlantıyı önce doğrulayın.");
+            }
+
+            string connectionString = $"Server={server}; Database={database}; User Id={user}; Password={pass};";
+            var procedures = new List<string>();
+
+            try
+            {
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    string query = $"SELECT name AS ProcedureName FROM {database}.sys.procedures";
+
+                    using (var command = new SqlCommand(query, connection))
+                    {
+                        using (var reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                procedures.Add(reader["ProcedureName"].ToString());
+                            }
+                        }
+                    }
+                }
+                return Ok(procedures);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Veritabanı hatası: {ex.Message}");
+            }
+        }
+
+        [HttpPost("executeProcedure")]
+        public IActionResult ExecuteProcedure([FromBody] string procedureName)
+        {
+            string server = HttpContext.Session.GetString("Server");
+            string user = HttpContext.Session.GetString("User");
+            string pass = HttpContext.Session.GetString("Pass");
+            string database = HttpContext.Session.GetString("Database");
+
+            if (string.IsNullOrEmpty(server) || string.IsNullOrEmpty(user) || string.IsNullOrEmpty(pass) || string.IsNullOrEmpty(database))
+            {
+                return BadRequest("Connection bilgileri bulunamadı. Lütfen bağlantıyı önce doğrulayın.");
+            }
+
+            string connectionString = $"Server={server}; Database={database}; User Id={user}; Password={pass};";
+            var result = new List<dynamic>();
+
+            try
+            {
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    using (var command = new SqlCommand($"EXEC {procedureName}", connection))
+                    {
+                        using (var reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                result.Add(new
+                                {
+                                    XValue = reader[0], // İlk sütun x değeri
+                                    YValue = reader[1]  // İkinci sütun y değeri
+                                });
+                            }
+                        }
+                    }
+                }
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Stored procedure çalıştırılırken hata: {ex.Message}");
+            }
+        }
+
+        [HttpGet("getViews")]
+        public IActionResult GetViews()
+        {
+            string server = HttpContext.Session.GetString("Server");
+            string user = HttpContext.Session.GetString("User");
+            string pass = HttpContext.Session.GetString("Pass");
+            string database = HttpContext.Session.GetString("Database");
+
+            if (string.IsNullOrEmpty(server) || string.IsNullOrEmpty(user) || string.IsNullOrEmpty(pass) || string.IsNullOrEmpty(database))
+            {
+                return BadRequest("Connection bilgileri bulunamadı. Lütfen bağlantıyı önce doğrulayın.");
+            }
+
+            string connectionString = $"Server={server}; Database={database}; User Id={user}; Password={pass};";
+            var procedures = new List<string>();
+
+            try
+            {
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    string query = $"SELECT name AS ViewName FROM {database}.sys.views";
+
+                    using (var command = new SqlCommand(query, connection))
+                    {
+                        using (var reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                procedures.Add(reader["ViewName"].ToString());
+                            }
+                        }
+                    }
+                }
+                return Ok(procedures);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Veritabanı hatası: {ex.Message}");
+            }
+        }
+
+        [HttpPost("executeViews")]
+        public IActionResult ExecuteViews([FromBody] string viewName)
+        {
+            string server = HttpContext.Session.GetString("Server");
+            string user = HttpContext.Session.GetString("User");
+            string pass = HttpContext.Session.GetString("Pass");
+            string database = HttpContext.Session.GetString("Database");
+
+            if (string.IsNullOrEmpty(server) || string.IsNullOrEmpty(user) || string.IsNullOrEmpty(pass) || string.IsNullOrEmpty(database))
+            {
+                return BadRequest("Connection bilgileri bulunamadı. Lütfen bağlantıyı önce doğrulayın.");
+            }
+
+            string connectionString = $"Server={server}; Database={database}; User Id={user}; Password={pass};";
+            var result = new List<dynamic>();
+
+            try
+            {
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    using (var command = new SqlCommand($"Select * from {viewName}", connection))
+                    {
+                        using (var reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                result.Add(new
+                                {
+                                    XValue = reader[0], // İlk sütun x değeri
+                                    YValue = reader[1]  // İkinci sütun y değeri
+                                });
+                            }
+                        }
+                    }
+                }
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Stored procedure çalıştırılırken hata: {ex.Message}");
+            }
+        }
+
     }
 }
 
