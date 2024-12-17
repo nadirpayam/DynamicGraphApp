@@ -14,7 +14,6 @@ builder.Services.AddSession(options =>
 });
 
 builder.Services.AddScoped<IDbConnectionService, DbConnectionService>();
-builder.Services.AddScoped<IDataService, DataService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

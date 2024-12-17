@@ -22,46 +22,39 @@
             <div class="col-md-6">
                 <h3 class="text-center">Veritabanı Bağlantı Bilgileri</h3>
                 <form id="dbForm">
-                    <div class="form-group">
+                    <div class="form-group mb-3">
                         <input type="text" class="form-control" id="server" placeholder="Sunucu Adını Giriniz" required>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group mb-3">
                         <input type="text" class="form-control" id="user" placeholder="Kullanıcı Adını Giriniz" required>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group mb-3">
                         <input type="password" class="form-control" id="pass" placeholder="Şifreyi Giriniz" required>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group mb-3">
                         <input type="text" class="form-control" id="db" placeholder="Veritabanı Adını Giriniz" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Bağlan</button>
+                    <button type="submit" class="btn btn-primary w-100">Bağlan</button>
                     <span id="connectionMessage" style="display:none; color: green;"></span>
                 </form>
                 <br />
-
-                <div id="columnsSection" style="display: none;">
-                    <div class="form-group">
-                        <input type="text" class="form-control" id="tableName" placeholder="Tablo Adını Giriniz" required>
-                    </div>
-                    <div class="form-group">
-                        <input type="text" class="form-control" id="xColumn" placeholder="Metin İçerikli Sütunu Giriniz" required>
-                    </div>
-                    <div class="form-group">
-                        <input type="text" class="form-control" id="yColumn" placeholder="Sayısal İçerikli Sütunu Giriniz" required>
-                    </div>
-                    <button id="fetchDataButton" class="btn btn-primary">Verileri Topla</button>
-                    <span id="dataMessage" style="display:none; color: green;"></span>
+             
+                <div id="procedureId" class="input-group mb-3" style="display: none;" id="procedureContainer">
+                    <select id="proceduresComboBox" class="form-select" style="width: 50%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-size: 16px;">
+                        <option value="">Lütfen bir prosedür seçin</option>
+                    </select>
+                    <button id="executeProcedureButton" class="btn btn-success" style="margin-left: 10px; padding: 10px 20px; font-size: 16px;">Seçili SP'yi Grafiğe Aktar</button>
                 </div>
 
-                <select id="proceduresComboBox" class="form-select" style="display: none;">
-                    <option value="">Lütfen bir prosedür seçin</option>
-                </select>
-                <button id="executeProcedureButton" class="btn btn-success" style="display: none;">Sp Grafiğe Aktar</button>
-                <select id="viewsComboBox" class="form-select" style="display: none;">
-                    <option value="">Lütfen bir prosedür seçin</option>
-                </select>
-                <button id="executeViewButton" class="btn btn-success" style="display: none;">View Grafiğe Aktar</button>
+                <div id="viewId" class="input-group mb-3" style="display: none;" id="viewContainer">
+                    <select id="viewsComboBox" class="form-select" style="width: 50%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-size: 16px;">
+                        <option value="">Lütfen bir view seçin</option>
+                    </select>
+                    <button id="executeViewButton" class="btn btn-success" style="margin-left: 10px; padding: 10px 20px; font-size: 16px;">Seçili View'ı Grafiğe Aktar</button>
+                </div>
+
             </div>
+
 
             <div id="graph" class="col-md-6" style="display: none;">
                 <h3 class="text-center">Grafik Tipi Seçin</h3>

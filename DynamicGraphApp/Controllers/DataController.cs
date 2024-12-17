@@ -11,16 +11,66 @@ namespace DynamicGraphApp.Controllers
     public class DataController : ControllerBase
     {
         private readonly IDbConnectionService _dbConnectionService;
-        private readonly IDataService _dataService;
 
-        public DataController(IDbConnectionService dbConnectionService, IDataService dataService)
+        public DataController(IDbConnectionService dbConnectionService)
         {
             _dbConnectionService = dbConnectionService;
-            _dataService = dataService;
         }
+
         private string GetConnectionString(DatabaseConnectionInfo dbInfo)
         {
             return _dbConnectionService.GetConnectionString(dbInfo);
+        }
+
+        private IActionResult GetDatabaseInfo()
+        {
+            string server = HttpContext.Session.GetString("Server");
+            string user = HttpContext.Session.GetString("User");
+            string pass = HttpContext.Session.GetString("Pass");
+            string database = HttpContext.Session.GetString("Database");
+
+            if (string.IsNullOrEmpty(server) || string.IsNullOrEmpty(user) || string.IsNullOrEmpty(pass) || string.IsNullOrEmpty(database))
+            {
+                return BadRequest("Connection bilgileri bulunamadı. Lütfen bağlantıyı önce doğrulayın.");
+            }
+
+            return Ok(new { server, user, pass, database });
+        }
+
+        private List<string> ExecuteQuery(string query)
+        {
+            var result = new List<string>();
+            var dbInfoResult = GetDatabaseInfo() as OkObjectResult;
+
+            if (dbInfoResult == null)
+                return result;
+
+            var dbInfo = dbInfoResult.Value as dynamic;
+            string connectionString = $"Server={dbInfo.server}; Database={dbInfo.database}; User Id={dbInfo.user}; Password={dbInfo.pass};";
+
+            try
+            {
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    using (var command = new SqlCommand(query, connection))
+                    {
+                        using (var reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                result.Add(reader[0].ToString());
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Veritabanı hatası: {ex.Message}");
+            }
+
+            return result;
         }
 
         [HttpPost("verifyConnection")]
@@ -40,89 +90,40 @@ namespace DynamicGraphApp.Controllers
             return BadRequest("Veritabanına bağlanırken hata oluştu.");
         }
 
-        [HttpPost("getData")]
-        public IActionResult GetData([FromBody] DataQuery dataQuery)
-        {
-            string server = HttpContext.Session.GetString("Server");
-            string user = HttpContext.Session.GetString("User");
-            string pass = HttpContext.Session.GetString("Pass");
-            string database = HttpContext.Session.GetString("Database");
-
-            if (string.IsNullOrEmpty(server) || string.IsNullOrEmpty(user) || string.IsNullOrEmpty(pass) || string.IsNullOrEmpty(database))
-            {
-                return BadRequest("Connection bilgileri bulunamadı. Lütfen bağlantıyı önce doğrulayın.");
-            }
-
-            string connectionString = $"Server={server}; Database={database}; User Id={user}; Password={pass};";
-            var data = _dataService.GetData(connectionString, dataQuery);
-
-            return Ok(data);
-        }
-
         [HttpGet("getProcedures")]
         public IActionResult GetProcedures()
         {
-            string server = HttpContext.Session.GetString("Server");
-            string user = HttpContext.Session.GetString("User");
-            string pass = HttpContext.Session.GetString("Pass");
-            string database = HttpContext.Session.GetString("Database");
+            string query = "SELECT name AS ProcedureName FROM sys.procedures";
+            var procedures = ExecuteQuery(query);
 
-            if (string.IsNullOrEmpty(server) || string.IsNullOrEmpty(user) || string.IsNullOrEmpty(pass) || string.IsNullOrEmpty(database))
+            if (procedures.Count == 0)
             {
-                return BadRequest("Connection bilgileri bulunamadı. Lütfen bağlantıyı önce doğrulayın.");
+                return StatusCode(500, "Stored procedure'lar alınırken hata oluştu.");
             }
 
-            string connectionString = $"Server={server}; Database={database}; User Id={user}; Password={pass};";
-            var procedures = new List<string>();
-
-            try
-            {
-                using (var connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    string query = $"SELECT name AS ProcedureName FROM {database}.sys.procedures";
-
-                    using (var command = new SqlCommand(query, connection))
-                    {
-                        using (var reader = command.ExecuteReader())
-                        {
-                            while (reader.Read())
-                            {
-                                procedures.Add(reader["ProcedureName"].ToString());
-                            }
-                        }
-                    }
-                }
-                return Ok(procedures);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Veritabanı hatası: {ex.Message}");
-            }
+            return Ok(procedures);
         }
 
         [HttpPost("executeProcedure")]
         public IActionResult ExecuteProcedure([FromBody] string procedureName)
         {
-            string server = HttpContext.Session.GetString("Server");
-            string user = HttpContext.Session.GetString("User");
-            string pass = HttpContext.Session.GetString("Pass");
-            string database = HttpContext.Session.GetString("Database");
-
-            if (string.IsNullOrEmpty(server) || string.IsNullOrEmpty(user) || string.IsNullOrEmpty(pass) || string.IsNullOrEmpty(database))
-            {
-                return BadRequest("Connection bilgileri bulunamadı. Lütfen bağlantıyı önce doğrulayın.");
-            }
-
-            string connectionString = $"Server={server}; Database={database}; User Id={user}; Password={pass};";
+            string query = $"EXEC {procedureName}";
             var result = new List<dynamic>();
+
+            var dbInfoResult = GetDatabaseInfo() as OkObjectResult;
+
+            if (dbInfoResult == null)
+                return BadRequest("Connection bilgileri bulunamadı. Lütfen bağlantıyı önce doğrulayın.");
+
+            var dbInfo = dbInfoResult.Value as dynamic;
+            string connectionString = $"Server={dbInfo.server}; Database={dbInfo.database}; User Id={dbInfo.user}; Password={dbInfo.pass};";
 
             try
             {
                 using (var connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    using (var command = new SqlCommand($"EXEC {procedureName}", connection))
+                    using (var command = new SqlCommand(query, connection))
                     {
                         using (var reader = command.ExecuteReader())
                         {
@@ -130,8 +131,8 @@ namespace DynamicGraphApp.Controllers
                             {
                                 result.Add(new
                                 {
-                                    XValue = reader[0], // İlk sütun x değeri
-                                    YValue = reader[1]  // İkinci sütun y değeri
+                                    XValue = reader[0], 
+                                    YValue = reader[1]  
                                 });
                             }
                         }
@@ -148,67 +149,37 @@ namespace DynamicGraphApp.Controllers
         [HttpGet("getViews")]
         public IActionResult GetViews()
         {
-            string server = HttpContext.Session.GetString("Server");
-            string user = HttpContext.Session.GetString("User");
-            string pass = HttpContext.Session.GetString("Pass");
-            string database = HttpContext.Session.GetString("Database");
+            string query = "SELECT name AS ViewName FROM sys.views";
+            var views = ExecuteQuery(query);
 
-            if (string.IsNullOrEmpty(server) || string.IsNullOrEmpty(user) || string.IsNullOrEmpty(pass) || string.IsNullOrEmpty(database))
+            if (views.Count == 0)
             {
-                return BadRequest("Connection bilgileri bulunamadı. Lütfen bağlantıyı önce doğrulayın.");
+                return StatusCode(500, "Views alınırken hata oluştu.");
             }
 
-            string connectionString = $"Server={server}; Database={database}; User Id={user}; Password={pass};";
-            var procedures = new List<string>();
-
-            try
-            {
-                using (var connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    string query = $"SELECT name AS ViewName FROM {database}.sys.views";
-
-                    using (var command = new SqlCommand(query, connection))
-                    {
-                        using (var reader = command.ExecuteReader())
-                        {
-                            while (reader.Read())
-                            {
-                                procedures.Add(reader["ViewName"].ToString());
-                            }
-                        }
-                    }
-                }
-                return Ok(procedures);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Veritabanı hatası: {ex.Message}");
-            }
+            return Ok(views);
         }
 
         [HttpPost("executeViews")]
         public IActionResult ExecuteViews([FromBody] string viewName)
         {
-            string server = HttpContext.Session.GetString("Server");
-            string user = HttpContext.Session.GetString("User");
-            string pass = HttpContext.Session.GetString("Pass");
-            string database = HttpContext.Session.GetString("Database");
-
-            if (string.IsNullOrEmpty(server) || string.IsNullOrEmpty(user) || string.IsNullOrEmpty(pass) || string.IsNullOrEmpty(database))
-            {
-                return BadRequest("Connection bilgileri bulunamadı. Lütfen bağlantıyı önce doğrulayın.");
-            }
-
-            string connectionString = $"Server={server}; Database={database}; User Id={user}; Password={pass};";
+            string query = $"SELECT * FROM {viewName}";
             var result = new List<dynamic>();
+
+            var dbInfoResult = GetDatabaseInfo() as OkObjectResult;
+
+            if (dbInfoResult == null)
+                return BadRequest("Connection bilgileri bulunamadı. Lütfen bağlantıyı önce doğrulayın.");
+
+            var dbInfo = dbInfoResult.Value as dynamic;
+            string connectionString = $"Server={dbInfo.server}; Database={dbInfo.database}; User Id={dbInfo.user}; Password={dbInfo.pass};";
 
             try
             {
                 using (var connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    using (var command = new SqlCommand($"Select * from {viewName}", connection))
+                    using (var command = new SqlCommand(query, connection))
                     {
                         using (var reader = command.ExecuteReader())
                         {
@@ -216,8 +187,8 @@ namespace DynamicGraphApp.Controllers
                             {
                                 result.Add(new
                                 {
-                                    XValue = reader[0], // İlk sütun x değeri
-                                    YValue = reader[1]  // İkinci sütun y değeri
+                                    XValue = reader[0],
+                                    YValue = reader[1]  
                                 });
                             }
                         }
@@ -227,10 +198,9 @@ namespace DynamicGraphApp.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Stored procedure çalıştırılırken hata: {ex.Message}");
+                return StatusCode(500, $"View çalıştırılırken hata: {ex.Message}");
             }
         }
-
     }
 }
 

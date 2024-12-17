@@ -1,118 +1,86 @@
 $(document).ready(() => {
     let myChart;
 
+  
+    const makeAjaxCall = (url, method, data = null, successCallback, errorCallback) => {
+        $.ajax({
+            url,
+            method,
+            contentType: "application/json",
+            data: data ? JSON.stringify(data) : undefined,
+            success: successCallback,
+            error: errorCallback
+        });
+    };
+
     $("#dbForm").on("submit", (event) => {
         event.preventDefault();
 
-        let server = $("#server").val();
-        let user = $("#user").val();
-        let pass = $("#pass").val();
-        let db = $("#db").val();
-        let connectionMessage = $("#connectionMessage");
+        const connectionData = {
+            server: $("#server").val(),
+            user: $("#user").val(),
+            pass: $("#pass").val(),
+            database: $("#db").val()
+        };
 
-        $.ajax({
-            url: "https://localhost:7205/api/Data/verifyConnection",
-            method: "POST",
-            contentType: "application/json",
-            data: JSON.stringify({
-                server: server,
-                user: user,
-                pass: pass,
-                database: db
-            }),
-            success: (data) => {
+        const connectionMessage = $("#connectionMessage");
+
+        makeAjaxCall(
+            "https://localhost:7205/api/Data/verifyConnection",
+            "POST",
+            connectionData,
+            (data) => {
                 if (data.success) {
+                    connectionMessage.text("Baglanildi.").show();
                     $("#columnsSection").show();
-                    connectionMessage.text("Baðlanýldý.").show();
-                    setTimeout(() => {
-                        connectionMessage.fadeOut();
-                    }, 3000);
-
-                    // Veritabaný baðlantýsý baþarýlýysa prosedürleri getirme iþlemini baþlat
-                    $.ajax({
-                        url: "https://localhost:7205/api/Data/getProcedures",
-                        method: "GET",
-                        success: (procedures) => {
-                            // Dönen prosedür isimlerini combobox'ta listele
-                            const comboBox = $("#proceduresComboBox");
-                            comboBox.empty(); // Önce mevcut öðeleri temizle
-                            procedures.forEach((procedure) => {
-                                comboBox.append(new Option(procedure, procedure));
-                            });
-                            $("#proceduresComboBox").show();
-                            $("#executeProcedureButton").show();
-                        },
-                        error: (error) => {
-                            console.error("Prosedürler alýnýrken bir hata oluþtu:", error);
-                        }
-                    });
-                    $.ajax({
-                        url: "https://localhost:7205/api/Data/getViews",
-                        method: "GET",
-                        success: (procedures) => {
-                            // Dönen prosedür isimlerini combobox'ta listele
-                            const comboBox = $("#viewsComboBox");
-                            comboBox.empty(); // Önce mevcut öðeleri temizle
-                            procedures.forEach((procedure) => {
-                                comboBox.append(new Option(procedure, procedure));
-                            });
-                            $("#viewsComboBox").show();
-                            $("#executeViewButton").show();
-                        },
-                        error: (error) => {
-                            console.error("View alýnýrken bir hata oluþtu:", error);
-                        }
-                    });
+                    setTimeout(() => connectionMessage.fadeOut(), 3000);
+                    fetchProcedures();
+                    fetchViews();
                 } else {
                     connectionMessage.text("Bilgilerinizde bir hata var, lütfen düzeltin.").show();
                 }
             },
-
-            error: (error) => {
+            (error) => {
                 connectionMessage.text("Hata: " + error.message).css("color", "red").show();
             }
-
-        });
+        );
     });
 
-    let valuesArray = [];
-
-    $("#fetchDataButton").on("click", () => {
-        let tableName = $("#tableName").val();
-        let xColumn = $("#xColumn").val();
-        let yColumn = $("#yColumn").val();
-        let dataMessage = $("#dataMessage");
-
-        $.ajax({
-            url: "https://localhost:7205/api/data/GetData",
-            method: "POST",
-            contentType: "application/json",
-            data: JSON.stringify({
-                tableName: tableName,
-                xColumn: xColumn,
-                yColumn: yColumn
-            }),
-            success: (data) => {
-                if (data.length > 0) {
-                    valuesArray = data.map(item => ({
-                        x: item.xValue,
-                        y: item.yValue
-                    }));
-                    $("#graph").show();
-                    $("#dataMessage").show();
-                    dataMessage.text("Veriler basariyla toplandi. Simdi grafik olusturabilirsiniz.").show();
-                    setTimeout(() => {
-                        dataMessage.fadeOut();
-                    }, 3000);
-                } else {
-                    dataMessage.text("Veri bulunamadi.").css("color", "red").show();
-                }
+    const fetchProcedures = () => {
+        makeAjaxCall(
+            "https://localhost:7205/api/Data/getProcedures",
+            "GET",
+            null,
+            (procedures) => {
+                const comboBox = $("#proceduresComboBox");
+                comboBox.empty();
+                procedures.forEach((procedure) => {
+                    comboBox.append(new Option(procedure, procedure));
+                });
+                $("#proceduresComboBox, #executeProcedureButton").show();
             },
-            error: (error) => {
-                dataMessage.text("Hata: " + error.message).show();
-            }
-        });
-    });
+            (error) => console.error("Prosedürler alýnýrken bir hata oluþtu:", error)
+        );
+    };
+
+ 
+    const fetchViews = () => {
+        makeAjaxCall(
+            "https://localhost:7205/api/Data/getViews",
+            "GET",
+            null,
+            (views) => {
+                const comboBox = $("#viewsComboBox");
+                comboBox.empty();
+                views.forEach((view) => {
+                    comboBox.append(new Option(view, view));
+                });
+                $("#procedureId, #viewId").show();
+            },
+            (error) => console.error("View alýnýrken bir hata oluþtu:", error)
+        );
+    };
+
 
     $("#executeProcedureButton").on("click", () => {
         const selectedProcedure = $("#proceduresComboBox").val();
@@ -120,74 +88,45 @@ $(document).ready(() => {
             alert("Lütfen bir prosedür seçin.");
             return;
         }
-
-        $.ajax({
-            url: "https://localhost:7205/api/Data/executeProcedure",
-            method: "POST",
-            contentType: "application/json",
-            data: JSON.stringify(selectedProcedure),
-            success: (data) => {
-                if (data.length > 0) {
-                    valuesArray = data.map(item => ({
-                        x: item.xValue,
-                        y: item.yValue
-                    }));
-                    $("#graph").show();
-                    $("#dataMessage").show();
-                    
-                    $("#dataMessage").text("Veriler baþarýyla toplandý. Þimdi grafik oluþturabilirsiniz.").show();
-                    setTimeout(() => {
-                        $("#dataMessage").fadeOut();
-                    }, 3000);
-                } else {
-                    $("#dataMessage").text("Veri bulunamadý.").css("color", "red").show();
-                }
-            },
-            error: (error) => {
-                console.error("Hata:", error);
-                alert("Stored procedure çalýþtýrýlýrken bir hata oluþtu.");
-            }
-        });
+        if (myChart) {
+            myChart.destroy();
+        }
+        executeStoredProcedureOrView("https://localhost:7205/api/Data/executeProcedure", selectedProcedure);
     });
 
     $("#executeViewButton").on("click", () => {
         const selectedView = $("#viewsComboBox").val();
         if (!selectedView) {
-            alert("Lütfen bir prosedür seçin.");
+            alert("Lütfen bir view seçin.");
             return;
         }
+        if (myChart) {
+            myChart.destroy();
+        }
+        executeStoredProcedureOrView("https://localhost:7205/api/Data/executeViews", selectedView);
+    });
 
-        $.ajax({
-            url: "https://localhost:7205/api/Data/executeViews",
-            method: "POST",
-            contentType: "application/json",
-            data: JSON.stringify(selectedView),
-            success: (data) => {
+    const executeStoredProcedureOrView = (url, selectedItem) => {
+        makeAjaxCall(
+            url,
+            "POST",
+            selectedItem,
+            (data) => {
                 if (data.length > 0) {
-                    valuesArray = data.map(item => ({
-                        x: item.xValue,
-                        y: item.yValue
-                    }));
-                    $("#graph").show();
-                    $("#dataMessage").show();
-
+                    valuesArray = data.map(item => ({ x: item.xValue, y: item.yValue }));
+                    $("#graph, #dataMessage").show();
                     $("#dataMessage").text("Veriler baþarýyla toplandý. Þimdi grafik oluþturabilirsiniz.").show();
-                    setTimeout(() => {
-                        $("#dataMessage").fadeOut();
-                    }, 3000);
+                    setTimeout(() => $("#dataMessage").fadeOut(), 3000);
                 } else {
                     $("#dataMessage").text("Veri bulunamadý.").css("color", "red").show();
                 }
             },
-            error: (error) => {
+            (error) => {
                 console.error("Hata:", error);
-                alert("Stored procedure çalýþtýrýlýrken bir hata oluþtu.");
+                alert("Stored procedure veya view çalýþtýrýlýrken bir hata oluþtu.");
             }
-        });
-    });
-
-
-
+        );
+    };
     const getValues = () => ({
         xValues: valuesArray.map(item => item.x),
         yValues: valuesArray.map(item => item.y)
@@ -221,7 +160,7 @@ $(document).ready(() => {
             legend: { display: false },
             title: {
                 display: true,
-                text: "Dinamik Çizgi Grafigi"
+                text: "Dinamik Cizgi Grafigi"
             }
         });
     };
@@ -239,7 +178,7 @@ $(document).ready(() => {
             legend: { display: false },
             title: {
                 display: true,
-                text: "Dinamik Çubuk Grafigi"
+                text: "Dinamik Cubuk Grafigi"
             }
         });
     };
@@ -307,9 +246,7 @@ $(document).ready(() => {
         $("#pass").val("");
         $("#db").val("");
         $("#columnsSection").hide();
-
-        $("#tableName").val("");
-        $("#xColumn").val("");
-        $("#yColumn").val("");
+        $("#viewId").hide();
+        $("#procedureId").hide();
     });
 });
